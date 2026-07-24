@@ -153,6 +153,8 @@ let over = false;
 let win = false;
 let score = 0;
 let gameStart = false;
+let winCountdown = 0;
+let winTimer = null;
 
 // 按键状态
 const keys = {
@@ -199,7 +201,6 @@ canvas.addEventListener('touchend',function(e){
 const btnLeft = document.getElementById("btnLeft");
 const btnRight = document.getElementById("btnRight");
 const btnJump = document.getElementById("btnJump");
-
 btnLeft.addEventListener('touchstart',e=>{e.preventDefault();keys.left=true;});
 btnLeft.addEventListener('touchend',e=>{e.preventDefault();keys.left=false;});
 btnRight.addEventListener('touchstart',e=>{e.preventDefault();keys.right=true;});
@@ -257,13 +258,22 @@ function run(){
             if(o.x+o.w<0){
                 obsList.splice(i,1);
                 score +=10;
-                if(score >= 70){
+                if(score >= 70 && !win){
                     win = true;
+                    winCountdown = 2;
+                    // 倒计时跳转主页
+                    winTimer = setInterval(()=>{
+                        winCountdown -= 0.02;
+                        if(winCountdown <= 0){
+                            clearInterval(winTimer);
+                            window.location.href = "https://facaifu.github.io/";
+                        }
+                    },20);
                 }
             }
         }
     }else{
-        // 结束状态障碍静止
+        // 未开始 / 结束，障碍静止
         for(let i=0;i<obsList.length;i++){
             let o = obsList[i];
             ctx.fillStyle="#e84444";
@@ -278,7 +288,7 @@ function run(){
 
     if(win){
         ctx.fillStyle="#4ade80";
-        ctx.fillText("🎉 胜利！分数达到70！点击画面重新开始",canvas.width/2-175,canvas.height/2);
+        ctx.fillText(`🎉 胜利！！ohhhhhhh${winCountdown.toFixed(1)}秒后自动返回主页`,canvas.width/2-210,canvas.height/2);
     }else if(over){
         ctx.fillText("游戏结束，点击画面重新开始",canvas.width/2-155,canvas.height/2);
     }
