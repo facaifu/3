@@ -67,7 +67,7 @@ nav a{color:#aeb7df;text-decoration:none}
 .restart{
     background:linear-gradient(135deg,#06b6d4,#22d3ee);
 }
-/* 手机虚拟按键 */
+/* 手机虚拟按键布局 */
 .mobile-ctrl{
     display:none;
     width:100%;
@@ -75,6 +75,11 @@ nav a{color:#aeb7df;text-decoration:none}
     margin:0 auto 20px;
     padding:0 20px;
     justify-content:space-between;
+    align-items:center;
+}
+.left-group{
+    display:flex;
+    gap:12px;
 }
 .ctrl-btn{
     width:80px;height:80px;
@@ -86,9 +91,20 @@ nav a{color:#aeb7df;text-decoration:none}
     display:flex;align-items:center;justify-content:center;
     user-select:none;
 }
+.jump-btn{
+    width:90px;height:90px;
+    border-radius:50%;
+    background:rgba(52,211,153,0.35);
+    border:2px solid #34d399;
+    color:#fff;
+    font-size:22px;
+    display:flex;align-items:center;justify-content:center;
+    user-select:none;
+}
 @media(max-width:768px){
     .mobile-ctrl{display:flex;}
     .ctrl-btn{width:70px;height:70px;font-size:22px;}
+    .jump-btn{width:80px;height:80px;font-size:20px;}
 }
 </style>
 </head>
@@ -106,8 +122,11 @@ nav a{color:#aeb7df;text-decoration:none}
 <div class="tip">空格 / 点击画面跳跃 | A D 左右移动（手机可使用下方按键）</div>
 
 <div class="mobile-ctrl">
-    <div class="ctrl-btn" id="btnLeft">←</div>
-    <div class="ctrl-btn" id="btnRight">→</div>
+    <div class="left-group">
+        <div class="ctrl-btn" id="btnLeft">←</div>
+        <div class="ctrl-btn" id="btnRight">→</div>
+    </div>
+    <div class="jump-btn" id="btnJump">跳跃</div>
 </div>
 
 <div class="btn-group">
@@ -179,10 +198,13 @@ canvas.addEventListener('touchend',function(e){
 // 手机虚拟按键
 const btnLeft = document.getElementById("btnLeft");
 const btnRight = document.getElementById("btnRight");
+const btnJump = document.getElementById("btnJump");
+
 btnLeft.addEventListener('touchstart',e=>{e.preventDefault();keys.left=true;});
 btnLeft.addEventListener('touchend',e=>{e.preventDefault();keys.left=false;});
 btnRight.addEventListener('touchstart',e=>{e.preventDefault();keys.right=true;});
 btnRight.addEventListener('touchend',e=>{e.preventDefault();keys.right=false;});
+btnJump.addEventListener('touchstart',e=>{e.preventDefault();jump();});
 
 // 生成障碍
 function createObs(){
