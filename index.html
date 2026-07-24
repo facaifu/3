@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TECH LAB · 跑酷</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei}
+body{background:#0a0e27;color:#fff;text-align:center;overflow-x:hidden}
+nav{
+    width:100%;height:70px;
+    background:rgba(10,14,39,0.85);
+    border-bottom:1px solid rgba(99,102,241,0.3);
+    display:flex;justify-content:space-between;align-items:center;
+    padding:0 5%;
+}
+.logo{font-size:24px;font-weight:bold}
+nav a{color:#aeb7df;text-decoration:none}
+#gameCanvas{
+    border:2px solid #6366f1;
+    margin:20px auto;
+    border-radius:8px;
+    max-width:96%;
+}
+.tip{color:#c3c9f0;font-size:14px;margin-bottom:16px}
+.btn-group{
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+.back,.restart{
+    padding:12px 32px;border-radius:30px;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    color:#fff;text-decoration:none;
+    border:none;
+    font-size:16px;
+    cursor:pointer;
+}
+.restart{
+    background:linear-gradient(135deg,#06b6d4,#22d3ee);
+}
+/* 手机虚拟按键 */
+.mobile-ctrl{
+    display:none;
+    width:100%;
+    max-width:700px;
+    margin:0 auto 20px;
+    padding:0 10px;
+    justify-content:space-between;
+}
+.ctrl-btn{
+    width:80px;height:80px;
+    border-radius:50%;
+    background:rgba(99,102,241,0.35);
+    border:2px solid #6366f1;
+    color:#fff;
+    font-size:26px;
+    display:flex;align-items:center;justify-content:center;
+    user-select:none;
+}
+@media(max-width:768px){
+    .mobile-ctrl{display:flex;}
+}
+</style>
+</head>
+<body>
+<nav>
+    <div class="logo">TECH LAB</div>
+    <div><a href="https://facaifu.github.io/">返回首页</a></div>
+</nav>
+
+<canvas id="gameCanvas" width="700" height="280"></canvas>
+<div class="tip">空格 / 点击画面跳跃 | A D 左右移动（手机可使用下方按键）</div>
+
+<div class="mobile-ctrl">
+    <div class="ctrl-btn" id="btnLeft">←</div>
+    <div class="ctrl-btn" id="btnRight">→</div>
+</div>
+
+<div class="btn-group">
+    <a href="https://facaifu.github.io/" class="back">回到主页</a>
+    <button class="restart" onclick="location.reload()">重新开始</button>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const groundY = canvas.height - 35;
+
+// 玩家
+const player = {
+    x:80,y:groundY-40,w:36,h:36,
+    vx:0,vy:0,
+    speed:6,
+    gravity:0.6,jump:-14,onGround:true
+};
+let obsList = [];
+// 难度再次下调
+let speed = 2.2;
+let over = false;
+let win = false;
+let score = 0;
+
+// 按键状态
+const keys = {
+    left:false,
+    right:false
+};
+
+// 跳跃
+function jump(){
+    if((!over && !win) && player.onGround){
+        player.vy = player.jump;
+        player.onGround = false;
+    }
+}
+
+// 电脑键盘
+document.addEventListener("keydown",e=>{
+    if(e.code=="Space") jump();
+    if(e.code=="KeyA") keys.left=true;
+    if(e.code=="KeyD") keys.right=true;
+});
+document.addEventListener("keyup",e=>{
+    if(e.code=="KeyA") keys.left=false;
+    if(e.code=="KeyD") keys.right=false;
+});
+canvas.onclick = jump;
+
+// 手机虚拟按键
+const btnLeft = document.getElementById("btnLeft");
+const btnRight = document.getElementById("btnRight");
+btnLeft.addEventListener('touchstart',e=>{e.preventDefault();keys.left=true;});
+btnLeft.addEventListener('touchend',e=>{e.preventDefault();keys.left=false;});
+btnRight.addEventListener('touchstart',e=>{e.preventDefault();keys.right=true;});
+btnRight.addEventListener('touchend',e=>{e.preventDefault();keys.right=false;});
+
+// 生成障碍
+function createObs(){
+    obsList.push({x:canvas.width,y:groundY-46,w:28,h:46});
+}
+
+function run(){
+    ctx.fillStyle="#0a0e27";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // 地面
+    ctx.fillStyle="#222850";
+    ctx.fillRect(0,groundY,canvas.width,35);
+
+    // 游戏进行中才能移动
+    if(!over && !win){
+        player.vx = 0;
+        if(keys.left) player.vx = -player.speed;
+        if(keys.right) player.vx = player.speed;
+        player.x += player.vx;
+    }
+
+    // 边界锁定
+    if(player.x < 0) player.x = 0;
+    if(player.x+player.w > canvas.width) player.x = canvas.width-player.w;
+
+    // 重力
+    player.vy += player.gravity;
+    player.y += player.vy;
+    if(player.y+player.h >= groundY){
+        player.y = groundY-player.h;
+        player.vy = 0;
+        player.onGround = true;
+    }
+
+    // 绘制玩家
+    ctx.fillStyle="#8b5cf6";
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+
+    if(!over && !win){
+        // 障碍生成概率进一步降低，障碍物更少
+        if(Math.random()<0.0045) createObs();
+        for(let i=obsList.length-1;i>=0;i--){
+            let o = obsList[i];
+            o.x -= speed;
+            ctx.fillStyle="#e84444";
+            ctx.fillRect(o.x,o.y,o.w,o.h);
+
+            // 碰撞判定结束
+            if(player.x<o.x+o.w && player.x+player.w>o.x && player.y<o.y+o.h && player.y+player.h>o.y){
+                over = true;
+            }
+            if(o.x+o.w<0){
+                obsList.splice(i,1);
+                score +=10;
+                if(score >= 200){
+                    win = true;
+                }
+            }
+        }
+    }else{
+        // 游戏结束/胜利，障碍物静止不动
+        for(let i=0;i<obsList.length;i++){
+            let o = obsList[i];
+            ctx.fillStyle="#e84444";
+            ctx.fillRect(o.x,o.y,o.w,o.h);
+        }
+    }
+
+    // 文字
+    ctx.fillStyle="#fff";
+    ctx.font="20px Microsoft YaHei";
+    ctx.fillText("得分："+score,20,32);
+
+    if(win){
+        ctx.fillStyle="#4ade80";
+        ctx.fillText("🎉 胜利！分数达到200！",canvas.width/2-130,canvas.height/2);
+    }else if(over){
+        ctx.fillText("游戏结束，点击下方重新开始",canvas.width/2-155,canvas.height/2);
+    }
+    requestAnimationFrame(run);
+}
+run();
+</script>
+</body>
+</html>
